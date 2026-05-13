@@ -25,6 +25,7 @@
                     ],
                     "storeSettings": {
                         "type": "AzureBlobFSReadSettings",
+                        "recursive": true,
                         "enablePartitionDiscovery": false
                     },
                     "formatSettings": {
@@ -54,6 +55,7 @@
                     ],
                     "storeSettings": {
                         "type": "AzureBlobFSReadSettings",
+                        "recursive": true,
                         "enablePartitionDiscovery": false
                     },
                     "formatSettings": {
@@ -156,10 +158,10 @@
                             },
                             "inputs": [
                                 {
-                                    "referenceName": "dynamic_src_new_files_only",
+                                    "referenceName": "adls_new_files_only",
                                     "type": "DatasetReference",
                                     "parameters": {
-                                        "Filename": {
+                                        "filename": {
                                             "value": "@item().name",
                                             "type": "Expression"
                                         }
