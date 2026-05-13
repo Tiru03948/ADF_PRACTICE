@@ -1,0 +1,31 @@
+{
+	"name": "sqldb_metadata",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "dbconnect",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "sno",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "schemaname",
+				"type": "varchar"
+			},
+			{
+				"name": "tablename",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "metadatatables"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

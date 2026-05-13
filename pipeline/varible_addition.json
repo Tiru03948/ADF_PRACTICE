@@ -1,0 +1,60 @@
+{
+	"name": "varible_addition",
+	"properties": {
+		"description": "this pipeline created by given exercise",
+		"activities": [
+			{
+				"name": "Set variableX",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "varibleX",
+					"value": 10
+				}
+			},
+			{
+				"name": "Set variableY",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Set variableX",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "varibleY",
+					"value": {
+						"value": "@add(variables('varibleX'),1)",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"variables": {
+			"varibleX": {
+				"type": "Integer"
+			},
+			"varibleTemp": {
+				"type": "Integer"
+			},
+			"varibleY": {
+				"type": "Integer"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2026-05-11T11:26:16Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
