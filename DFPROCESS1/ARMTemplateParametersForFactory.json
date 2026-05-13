@@ -1,0 +1,36 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "DFPROCESS1"
+		},
+		"adlsconnect_accountKey": {
+			"value": ""
+		},
+		"dbconnect_password": {
+			"value": ""
+		},
+		"AzureKeyVault_properties_typeProperties_baseUrl": {
+			"value": "https://kvindiaanalytics.vault.azure.net/"
+		},
+		"adlsconnect_properties_typeProperties_url": {
+			"value": "https://saindiaana.dfs.core.windows.net/"
+		},
+		"dbconnect_properties_typeProperties_server": {
+			"value": "indiadata.database.windows.net"
+		},
+		"dbconnect_properties_typeProperties_database": {
+			"value": "dbindiaanalytics"
+		},
+		"dbconnect_properties_typeProperties_userName": {
+			"value": "dbmanager1"
+		},
+		"tumbling-window_properties_pipeline_parameters_Schema": {
+			"value": "dbo"
+		},
+		"tumbling-window_properties_pipeline_parameters_Tablename": {
+			"value": "Employees"
+		}
+	}
+}
