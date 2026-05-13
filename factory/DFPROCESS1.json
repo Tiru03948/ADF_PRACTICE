@@ -1,0 +1,15 @@
+{
+	"name": "DFPROCESS1",
+	"properties": {
+		"trustModeClaimForMi": {
+			"value": "Disabled",
+			"editable": true
+		}
+	},
+	"location": "southindia",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "94e9b668-40c2-483c-aed6-c8a00a6bab95",
+		"tenantId": "f1e07a00-ade1-4c36-9ebd-4573efece7e4"
+	}
+}

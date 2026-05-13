@@ -1,0 +1,122 @@
+{
+	"name": "dynamic_lift_shift_tables",
+	"properties": {
+		"description": "this pipeline takes all the table names from a meta data table and will load data from sql db to adls stroage",
+		"activities": [
+			{
+				"name": "Lookup_tablenames",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "select schemaname,tablename from dbo.metadatatables order by tablename;",
+						"queryTimeout": "02:00:00",
+						"isolationLevel": "ReadCommitted",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "sqldb_metadata",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach_load",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Lookup_tablenames",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Lookup_tablenames').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Copy_each_table",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 60,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "AzureSqlSource",
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"sink": {
+									"type": "DelimitedTextSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings",
+										"copyBehavior": "PreserveHierarchy"
+									},
+									"formatSettings": {
+										"type": "DelimitedTextWriteSettings",
+										"quoteAllText": true,
+										"fileExtension": ".csv"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "ADB",
+									"type": "DatasetReference",
+									"parameters": {
+										"schema": {
+											"value": "@item().schemaname",
+											"type": "Expression"
+										},
+										"tablename": {
+											"value": "@item().tablename",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "ADLS",
+									"type": "DatasetReference"
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2026-05-11T10:58:06Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

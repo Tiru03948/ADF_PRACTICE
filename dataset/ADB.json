@@ -1,0 +1,73 @@
+{
+	"name": "ADB",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "dbconnect",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"schema": {
+				"type": "string"
+			},
+			"tablename": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "Name",
+				"type": "varchar"
+			},
+			{
+				"name": "Age",
+				"type": "varchar"
+			},
+			{
+				"name": "City",
+				"type": "varchar"
+			},
+			{
+				"name": "Email",
+				"type": "varchar"
+			},
+			{
+				"name": "Salary",
+				"type": "varchar"
+			},
+			{
+				"name": "Department",
+				"type": "varchar"
+			},
+			{
+				"name": "JoinDate",
+				"type": "varchar"
+			},
+			{
+				"name": "Status",
+				"type": "varchar"
+			},
+			{
+				"name": "Remarks",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": {
+				"value": "@dataset().schema",
+				"type": "Expression"
+			},
+			"table": {
+				"value": "@dataset().tablename",
+				"type": "Expression"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

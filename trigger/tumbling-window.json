@@ -1,0 +1,32 @@
+{
+	"name": "tumbling-window",
+	"properties": {
+		"description": "the trigger will fire when a blob created in specified path",
+		"annotations": [],
+		"runtimeState": "Stopped",
+		"pipeline": {
+			"pipelineReference": {
+				"referenceName": "emp_lift_shift",
+				"type": "PipelineReference"
+			},
+			"parameters": {
+				"Schema": "dbo",
+				"Tablename": "Employees"
+			}
+		},
+		"type": "TumblingWindowTrigger",
+		"typeProperties": {
+			"frequency": "Minute",
+			"interval": 5,
+			"startTime": "2026-05-11T10:58:00Z",
+			"endTime": "2026-05-11T11:10:00Z",
+			"delay": "00:01:00",
+			"maxConcurrency": 50,
+			"retryPolicy": {
+				"count": 1,
+				"intervalInSeconds": 30
+			},
+			"dependsOn": []
+		}
+	}
+}
