@@ -1,81 +1,109 @@
 {
-	"name": "emp_lift_shift",
-	"properties": {
-		"activities": [
-			{
-				"name": "Copy_emp_table_file",
-				"type": "Copy",
-				"dependsOn": [],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 60,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"source": {
-						"type": "AzureSqlSource",
-						"queryTimeout": "02:00:00",
-						"partitionOption": "None"
-					},
-					"sink": {
-						"type": "DelimitedTextSink",
-						"storeSettings": {
-							"type": "AzureBlobFSWriteSettings",
-							"copyBehavior": "PreserveHierarchy"
-						},
-						"formatSettings": {
-							"type": "DelimitedTextWriteSettings",
-							"quoteAllText": true,
-							"fileExtension": ".txt"
-						}
-					},
-					"enableStaging": false,
-					"translator": {
-						"type": "TabularTranslator",
-						"typeConversion": true,
-						"typeConversionSettings": {
-							"allowDataTruncation": true,
-							"treatBooleanAsNumber": false
-						}
-					}
-				},
-				"inputs": [
-					{
-						"referenceName": "ADB",
-						"type": "DatasetReference",
-						"parameters": {
-							"schema": {
-								"value": "@pipeline().parameters.Schema",
-								"type": "Expression"
-							},
-							"tablename": {
-								"value": "@pipeline().parameters.Tablename",
-								"type": "Expression"
-							}
-						}
-					}
-				],
-				"outputs": [
-					{
-						"referenceName": "ADLS",
-						"type": "DatasetReference"
-					}
-				]
-			}
-		],
-		"parameters": {
-			"Schema": {
-				"type": "string"
-			},
-			"Tablename": {
-				"type": "string"
-			}
-		},
-		"annotations": [],
-		"lastPublishTime": "2026-05-11T07:06:41Z"
-	},
-	"type": "Microsoft.DataFactory/factories/pipelines"
+    "name": "emp_lift_shift_with_logicapps_notificatons",
+    "properties": {
+        "activities": [
+            {
+                "name": "Copy_emp_table_file",
+                "type": "Copy",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 60,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "sink": {
+                        "type": "DelimitedTextSink",
+                        "storeSettings": {
+                            "type": "AzureBlobFSWriteSettings",
+                            "copyBehavior": "PreserveHierarchy"
+                        },
+                        "formatSettings": {
+                            "type": "DelimitedTextWriteSettings",
+                            "quoteAllText": true,
+                            "fileExtension": ".txt"
+                        }
+                    },
+                    "enableStaging": false,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                },
+                "inputs": [
+                    {
+                        "referenceName": "ADB",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "schema": {
+                                "value": "@pipeline().parameters.Schema",
+                                "type": "Expression"
+                            },
+                            "tablename": {
+                                "value": "@pipeline().parameters.Tablename",
+                                "type": "Expression"
+                            }
+                        }
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "ADLS",
+                        "type": "DatasetReference"
+                    }
+                ]
+            },
+            {
+                "name": "trigger email",
+                "type": "WebActivity",
+                "dependsOn": [
+                    {
+                        "activity": "Copy_emp_table_file",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "POST",
+                    "url": "https://prod-14.southindia.logic.azure.com:443/workflows/0071b09b8edf4739be0d5383db8fa756/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=embZWtsvQ6IQnPcDVpVsYPcrMuKu2lNrUt9omTlAv30",
+                    "body": {
+                        "value": "{\n    \"to\":\"bethatirupathinaidu@gmail.com\",\n    \"subject\":\"failure pipeline notication\",\n    \"pipelineid\":\"@{pipeline().RunId}\",\n    \"adfname\":\"@{pipeline().DataFactory}\"\n}",
+                        "type": "Expression"
+                    }
+                }
+            }
+        ],
+        "parameters": {
+            "Schema": {
+                "type": "string"
+            },
+            "Tablename": {
+                "type": "string"
+            }
+        },
+        "annotations": [],
+        "lastPublishTime": "2026-05-13T06:57:25Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
 }
