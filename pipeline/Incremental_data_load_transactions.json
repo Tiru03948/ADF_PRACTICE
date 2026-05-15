@@ -5,9 +5,14 @@
 			{
 				"name": "Copy data",
 				"type": "Copy",
-				"state": "Inactive",
-				"onInactiveMarkAs": "Succeeded",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "get_last_modifieddate",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -19,13 +24,22 @@
 				"typeProperties": {
 					"source": {
 						"type": "AzureSqlSource",
+						"sqlReaderQuery": {
+							"value": "select * from dbo.Transactions \nwhere lastmodifieddate>cast('@{activity('get_last_modifieddate').output.resultSets[0].rows[0].max_date}' as datetime)",
+							"type": "Expression"
+						},
 						"queryTimeout": "02:00:00",
 						"partitionOption": "None"
 					},
 					"sink": {
 						"type": "AzureSqlSink",
-						"preCopyScript": "truncate table tgt.Transactions;",
-						"writeBehavior": "insert",
+						"writeBehavior": "upsert",
+						"upsertSettings": {
+							"useTempDB": false,
+							"keys": [
+								"TxnId"
+							]
+						},
 						"sqlWriterUseTableLock": false,
 						"disableMetricsCollection": false
 					},
@@ -82,21 +96,37 @@
 						{
 							"type": "Query",
 							"text": {
-								"value": "select max(lastmodifieddate) from @{pipeline().parameters.Schema}.@{pipeline().parameters.Table};",
+								"value": "select max(lastmodifieddate) as max_date from tgt.Transactions;",
 								"type": "Expression"
 							}
 						}
 					],
 					"scriptBlockExecutionTimeout": "02:00:00"
 				}
+			},
+			{
+				"name": "Set variable",
+				"type": "SetVariable",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "var1",
+					"value": {
+						"value": "@activity('get_last_modifieddate').output.resultSets[0].rows[0].max_date",
+						"type": "Expression"
+					}
+				}
 			}
 		],
-		"parameters": {
-			"Schema": {
-				"type": "string"
-			},
-			"Table": {
-				"type": "string"
+		"variables": {
+			"var1": {
+				"type": "String"
 			}
 		},
 		"annotations": []
