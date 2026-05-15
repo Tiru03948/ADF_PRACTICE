@@ -49,6 +49,202 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/Full data load')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy data",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "AzureSqlSink",
+								"preCopyScript": "truncate table tgt.Transactions;",
+								"writeBehavior": "insert",
+								"sqlWriterUseTableLock": false,
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "ADB",
+								"type": "DatasetReference",
+								"parameters": {
+									"schema": "dbo",
+									"tablename": "Transactions"
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ADB",
+								"type": "DatasetReference",
+								"parameters": {
+									"schema": "tgt",
+									"tablename": "Transactions"
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ADB')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Incremental_data_load_transactions')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy data",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "get_last_modifieddate",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"sqlReaderQuery": {
+									"value": "select * from dbo.Transactions \nwhere lastmodifieddate>cast('@{activity('get_last_modifieddate').output.resultSets[0].rows[0].max_date}' as datetime)",
+									"type": "Expression"
+								},
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "AzureSqlSink",
+								"writeBehavior": "upsert",
+								"upsertSettings": {
+									"useTempDB": false,
+									"keys": [
+										"TxnId"
+									]
+								},
+								"sqlWriterUseTableLock": false,
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "ADB",
+								"type": "DatasetReference",
+								"parameters": {
+									"schema": "dbo",
+									"tablename": "Transactions"
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ADB",
+								"type": "DatasetReference",
+								"parameters": {
+									"schema": "tgt",
+									"tablename": "Transactions"
+								}
+							}
+						]
+					},
+					{
+						"name": "get_last_modifieddate",
+						"description": "Activity used to identify the max last modified date time in target table",
+						"type": "Script",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "dbconnect",
+							"type": "LinkedServiceReference"
+						},
+						"typeProperties": {
+							"scripts": [
+								{
+									"type": "Query",
+									"text": {
+										"value": "select max(lastmodifieddate) as max_date from tgt.Transactions;",
+										"type": "Expression"
+									}
+								}
+							],
+							"scriptBlockExecutionTimeout": "02:00:00"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"var1": {
+						"type": "String"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ADB')]",
+				"[concat(variables('factoryId'), '/linkedServices/dbconnect')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/dynamic_lift_shift_tables')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -250,6 +446,35 @@
 								"parameters": {}
 							}
 						]
+					},
+					{
+						"name": "trigger email",
+						"type": "WebActivity",
+						"dependsOn": [
+							{
+								"activity": "Copy_emp_table_file",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "POST",
+							"headers": {},
+							"url": "https://prod-14.southindia.logic.azure.com:443/workflows/0071b09b8edf4739be0d5383db8fa756/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=embZWtsvQ6IQnPcDVpVsYPcrMuKu2lNrUt9omTlAv30",
+							"body": {
+								"value": "{\n    \"to\":\"bethatirupathinaidu@gmail.com\",\n    \"subject\":\"failure pipeline notication\",\n    \"pipelineid\":\"@{pipeline().RunId}\",\n    \"adfname\":\"@{pipeline().DataFactory}\"\n}",
+								"type": "Expression"
+							}
+						}
 					}
 				],
 				"policy": {
@@ -264,7 +489,7 @@
 					}
 				},
 				"annotations": [],
-				"lastPublishTime": "2026-05-11T07:06:41Z"
+				"lastPublishTime": "2026-05-13T06:57:25Z"
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/ADB')]",
@@ -272,15 +497,14 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/lift_shift_adls_sqldb')]",
+			"name": "[concat(parameters('factoryName'), '/load_new_files_only')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
-				"description": "moving files from adls folder using get meta data activity and load again into adls with diffierent container",
+				"description": "the pipeline verifies the target folder and identifies the files which is not exist in taraget folder exists in source folder and lods into those files target folder",
 				"activities": [
 					{
-						"name": "Get_container_meta",
-						"description": "Get_container_meta",
+						"name": "Get_src_metadata",
 						"type": "GetMetadata",
 						"dependsOn": [],
 						"policy": {
@@ -293,7 +517,7 @@
 						"userProperties": [],
 						"typeProperties": {
 							"dataset": {
-								"referenceName": "adls_container_metadata",
+								"referenceName": "adls_specific_text_files",
 								"type": "DatasetReference",
 								"parameters": {}
 							},
@@ -311,11 +535,48 @@
 						}
 					},
 					{
-						"name": "ForEach_file",
-						"type": "ForEach",
+						"name": "Get_tgt_metadata",
+						"type": "GetMetadata",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "ADLS",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobFSReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "DelimitedTextReadSettings"
+							}
+						}
+					},
+					{
+						"name": "Filter_new_files_only",
+						"type": "Filter",
 						"dependsOn": [
 							{
-								"activity": "Get_container_meta",
+								"activity": "Get_src_metadata",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "Get_tgt_metadata",
 								"dependencyConditions": [
 									"Succeeded"
 								]
@@ -324,12 +585,35 @@
 						"userProperties": [],
 						"typeProperties": {
 							"items": {
-								"value": "@activity('Get_container_meta').output.childItems",
+								"value": "@activity('Get_src_metadata').output.childItems",
+								"type": "Expression"
+							},
+							"condition": {
+								"value": "@not(contains(string(activity('Get_tgt_metadata').output.childItems),item().name))",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "ForEach_non_exist_file",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Filter_new_files_only",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Filter_new_files_only').output.value",
 								"type": "Expression"
 							},
 							"activities": [
 								{
-									"name": "Copydata_file_table",
+									"name": "Copy",
 									"type": "Copy",
 									"dependsOn": [],
 									"policy": {
@@ -376,10 +660,10 @@
 									},
 									"inputs": [
 										{
-											"referenceName": "Dynamic_adls",
+											"referenceName": "adls_new_files_only",
 											"type": "DatasetReference",
 											"parameters": {
-												"Filename": {
+												"filename": {
 													"value": "@item().name",
 													"type": "Expression"
 												}
@@ -388,62 +672,11 @@
 									],
 									"outputs": [
 										{
-											"referenceName": "dynamic_list_shift_source",
+											"referenceName": "ADLS",
 											"type": "DatasetReference",
 											"parameters": {}
 										}
 									]
-								},
-								{
-									"name": "Ifanycount",
-									"type": "IfCondition",
-									"dependsOn": [
-										{
-											"activity": "Copydata_file_table",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"userProperties": [],
-									"typeProperties": {
-										"expression": {
-											"value": "@greater(activity('Copydata_file_table').output.dataWritten,500)",
-											"type": "Expression"
-										},
-										"ifFalseActivities": [
-											{
-												"name": "Set variable0",
-												"type": "SetVariable",
-												"dependsOn": [],
-												"policy": {
-													"secureOutput": false,
-													"secureInput": false
-												},
-												"userProperties": [],
-												"typeProperties": {
-													"variableName": "failedstatus",
-													"value": "No new ingestion"
-												}
-											}
-										],
-										"ifTrueActivities": [
-											{
-												"name": "Set variable",
-												"type": "SetVariable",
-												"dependsOn": [],
-												"policy": {
-													"secureOutput": false,
-													"secureInput": false
-												},
-												"userProperties": [],
-												"typeProperties": {
-													"variableName": "additionvarible",
-													"value": "'Successfully ingested'"
-												}
-											}
-										]
-									}
 								}
 							]
 						}
@@ -452,21 +685,12 @@
 				"policy": {
 					"elapsedTimeMetric": {}
 				},
-				"variables": {
-					"additionvarible": {
-						"type": "String"
-					},
-					"failedstatus": {
-						"type": "String"
-					}
-				},
-				"annotations": [],
-				"lastPublishTime": "2026-05-11T15:17:31Z"
+				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/adls_container_metadata')]",
-				"[concat(variables('factoryId'), '/datasets/Dynamic_adls')]",
-				"[concat(variables('factoryId'), '/datasets/dynamic_list_shift_source')]"
+				"[concat(variables('factoryId'), '/datasets/adls_specific_text_files')]",
+				"[concat(variables('factoryId'), '/datasets/ADLS')]",
+				"[concat(variables('factoryId'), '/datasets/adls_new_files_only')]"
 			]
 		},
 		{
@@ -827,6 +1051,64 @@
 					"location": {
 						"type": "AzureBlobFSLocation",
 						"fileSystem": "tabletargets"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "CustomerID",
+						"type": "String"
+					},
+					{
+						"name": "Name",
+						"type": "String"
+					},
+					{
+						"name": "Age",
+						"type": "String"
+					},
+					{
+						"name": "City",
+						"type": "String"
+					},
+					{
+						"name": "Email",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/adlsconnect')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/adls_new_files_only')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "adlsconnect",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"filename": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().filename",
+							"type": "Expression"
+						},
+						"folderPath": "src",
+						"fileSystem": "input-source"
 					},
 					"columnDelimiter": ",",
 					"escapeChar": "\\",
