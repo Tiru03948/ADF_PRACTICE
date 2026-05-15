@@ -245,6 +245,70 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/activity_logging_pipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "pipelines used to maintain logs of the Datafatory pipelines using a stored procedure activity",
+				"activities": [
+					{
+						"name": "Stored procedure",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[dbo].[usp_LogADFActivity]",
+							"storedProcedureParameters": {
+								"ErrorMessage": {
+									"value": "",
+									"type": "String"
+								},
+								"PipelineName": {
+									"value": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"RunId": {
+									"value": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"Status": {
+									"value": {
+										"value": "'Success'",
+										"type": "Expression"
+									},
+									"type": "String"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "dbconnect",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/dbconnect')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/dynamic_lift_shift_tables')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -363,6 +427,57 @@
 								}
 							]
 						}
+					},
+					{
+						"name": "Stored procedure",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "ForEach_load",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[dbo].[usp_LogADFActivity]",
+							"storedProcedureParameters": {
+								"ErrorMessage": {
+									"value": "",
+									"type": "String"
+								},
+								"PipelineName": {
+									"value": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"RunId": {
+									"value": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"Status": {
+									"value": "'Failure'",
+									"type": "String"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "dbconnect",
+							"type": "LinkedServiceReference"
+						}
 					}
 				],
 				"policy": {
@@ -373,6 +488,7 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/sqldb_metadata')]",
+				"[concat(variables('factoryId'), '/linkedServices/dbconnect')]",
 				"[concat(variables('factoryId'), '/datasets/ADB')]",
 				"[concat(variables('factoryId'), '/datasets/ADLS')]"
 			]
@@ -475,6 +591,60 @@
 								"type": "Expression"
 							}
 						}
+					},
+					{
+						"name": "Stored procedure",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "trigger email",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[dbo].[usp_LogADFActivity]",
+							"storedProcedureParameters": {
+								"ErrorMessage": {
+									"value": "",
+									"type": "String"
+								},
+								"PipelineName": {
+									"value": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"RunId": {
+									"value": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"Status": {
+									"value": {
+										"value": "'SUCCESS'",
+										"type": "Expression"
+									},
+									"type": "String"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "dbconnect",
+							"type": "LinkedServiceReference"
+						}
 					}
 				],
 				"policy": {
@@ -493,7 +663,8 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/ADB')]",
-				"[concat(variables('factoryId'), '/datasets/ADLS')]"
+				"[concat(variables('factoryId'), '/datasets/ADLS')]",
+				"[concat(variables('factoryId'), '/linkedServices/dbconnect')]"
 			]
 		},
 		{
