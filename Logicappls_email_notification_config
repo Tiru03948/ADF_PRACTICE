@@ -1,0 +1,71 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "contentVersion": "1.0.0.0",
+        "triggers": {
+            "When_an_HTTP_request_is_received": {
+                "type": "Request",
+                "kind": "Http",
+                "inputs": {
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "to": {
+                                "type": "string"
+                            },
+                            "subject": {
+                                "type": "string"
+                            },
+                            "pipelineid": {
+                                "type": "string"
+                            },
+                            "adfname": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "actions": {
+            "Send_email_(V2)": {
+                "type": "ApiConnection",
+                "inputs": {
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['gmail']['connectionId']"
+                        }
+                    },
+                    "method": "post",
+                    "body": {
+                        "To": "@triggerBody()?['to']",
+                        "Subject": "@triggerBody()?['subject']",
+                        "Body": "<p class=\"editor-paragraph\">Dear User,</p><br><p class=\"editor-paragraph\">The specified pipeline has failed, please find below details and fix asap!</p><p class=\"editor-paragraph\">datafactory name: @{triggerBody()?['adfname']}</p><p class=\"editor-paragraph\">pipeline Id: @{triggerBody()?['pipelineid']}</p><br><p class=\"editor-paragraph\">Regards,</p><p class=\"editor-paragraph\">Automated Notifications</p>"
+                    },
+                    "path": "/v2/Mail"
+                },
+                "runAfter": {}
+            }
+        },
+        "outputs": {},
+        "parameters": {
+            "$connections": {
+                "type": "Object",
+                "defaultValue": {}
+            }
+        }
+    },
+    "parameters": {
+        "$connections": {
+            "type": "Object",
+            "value": {
+                "gmail": {
+                    "id": "/subscriptions/330113ae-3f66-4698-99d1-708b0aecd493/providers/Microsoft.Web/locations/southindia/managedApis/gmail",
+                    "connectionId": "/subscriptions/330113ae-3f66-4698-99d1-708b0aecd493/resourceGroups/RG_INDIA/providers/Microsoft.Web/connections/gmail",
+                    "connectionName": "gmail",
+                    "connectionProperties": {}
+                }
+            }
+        }
+    }
+}
