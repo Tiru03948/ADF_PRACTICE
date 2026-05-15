@@ -103,25 +103,6 @@
 					],
 					"scriptBlockExecutionTimeout": "02:00:00"
 				}
-			},
-			{
-				"name": "Set variable",
-				"type": "SetVariable",
-				"state": "Inactive",
-				"onInactiveMarkAs": "Succeeded",
-				"dependsOn": [],
-				"policy": {
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"variableName": "var1",
-					"value": {
-						"value": "@activity('get_last_modifieddate').output.resultSets[0].rows[0].max_date",
-						"type": "Expression"
-					}
-				}
 			}
 		],
 		"variables": {
