@@ -3,8 +3,8 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Notebook",
-				"type": "DatabricksNotebook",
+				"name": "Job1",
+				"type": "DatabricksJob",
 				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
@@ -14,9 +14,6 @@
 					"secureInput": false
 				},
 				"userProperties": [],
-				"typeProperties": {
-					"notebookPath": "https://adb-7405611309386883.3.azuredatabricks.net/editor/notebooks/2018403237795526?o=7405611309386883"
-				},
 				"linkedServiceName": {
 					"referenceName": "AzureDatabricks1",
 					"type": "LinkedServiceReference"
