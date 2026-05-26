@@ -6,12 +6,7 @@
 		"typeProperties": {
 			"domain": "https://adb-7405611309386883.3.azuredatabricks.net",
 			"authentication": "MSI",
-			"workspaceResourceId": "/subscriptions/330113ae-3f66-4698-99d1-708b0aecd493/resourceGroups/RG_INDIA/providers/Microsoft.Databricks/workspaces/ws-india-region-analytics",
-			"newClusterNodeType": "Standard_DS3_v2",
-			"newClusterNumOfWorker": "1",
-			"newClusterVersion": "10.4.x-scala2.12",
-			"clusterOption": "Fixed",
-			"newClusterInitScripts": []
+			"workspaceResourceId": "/subscriptions/330113ae-3f66-4698-99d1-708b0aecd493/resourceGroups/RG_INDIA/providers/Microsoft.Databricks/workspaces/ws-india-region-analytics"
 		}
 	}
 }
